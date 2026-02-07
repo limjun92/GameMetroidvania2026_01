@@ -15,7 +15,7 @@ public class PlayerMovement : MonoBehaviour
     public void Move(float horizontal, bool isDashing)
     {
         if (isDashing) return; // 대시 중엔 이동하지 않음
-        rb.velocity = new Vector2(horizontal * moveSpeed, rb.velocity.y);
+        rb.linearVelocity = new Vector2(horizontal * moveSpeed, rb.linearVelocity.y);
     }
 
     public void SetMoveSpeed(float speed)

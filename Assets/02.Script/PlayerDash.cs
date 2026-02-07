@@ -48,7 +48,7 @@ public class PlayerDash : MonoBehaviour
         rb.gravityScale = 0;
 
         float direction = facingRight ? 1 : -1;
-        rb.velocity = new Vector2(direction * dashSpeed, 0f);
+        rb.linearVelocity = new Vector2(direction * dashSpeed, 0f);
 
         yield return new WaitForSeconds(dashDuration);
 

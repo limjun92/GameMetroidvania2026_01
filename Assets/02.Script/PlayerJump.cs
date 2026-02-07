@@ -48,6 +48,6 @@ public class PlayerJump : MonoBehaviour
     }
     void Jump()
     {
-        rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
     }
 }
