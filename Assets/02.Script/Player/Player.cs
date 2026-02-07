@@ -4,12 +4,12 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    private PlayerJump playerJump;
+    private MovementController movementController;
 
     void Start()
     {
         // 같은 오브젝트 안에 있는 MovementController를 찾아서 저장
-        playerJump = GetComponent<PlayerJump>();
+        movementController = GetComponent<MovementController>();
     }
     void OnTriggerEnter2D(Collider2D collision)
     {
@@ -21,7 +21,12 @@ public class Player : MonoBehaviour
             {
                 if (artifact.name == "DoubleJump")
                 {
-                    playerJump.canDoubleJump = true;
+                    movementController.canDoubleJump = true;
+                    movementController.amountOfJumps = 2; // 점프 횟수 증가
+                }
+                else if (artifact.name == "Dash") // 새로운 아이템 이름
+                {
+                    movementController.isDashUnlocked = true;
                 }
             }
             
