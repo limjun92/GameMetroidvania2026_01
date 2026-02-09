@@ -18,11 +18,13 @@ public class PlayerAirState : PlayerState
     {
         base.LogicUpdate();
 
+        float inputX = player.InputHandler.MovementInput.x;
+        player.CheckIfShouldFlip(inputX);
+
         // Wall Slide 전환
         // 땅에 있지 않고, 벽에 붙어 있고, 벽 쪽으로 입력을 하고 있을 때 (상승 중이더라도 붙음)
         if (!player.CheckIfGrounded() && player.CheckIfTouchingWall())
         {
-            float inputX = player.InputHandler.MovementInput.x;
             // 벽 쪽으로 입력 확인 (오른쪽 보고 있을 때 오른쪽 키, 왼쪽 보고 있을 때 왼쪽 키)
             if (inputX != 0 && inputX == (player.FacingRight ? 1 : -1))
             {

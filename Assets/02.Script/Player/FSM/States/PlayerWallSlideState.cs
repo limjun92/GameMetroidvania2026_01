@@ -63,7 +63,10 @@ public class PlayerWallSlideState : PlayerState
 
         // 벽에서 떨어지거나, 땅에 닿거나, 벽 반대 방향으로 입력을 주면 Air/Idle 상태로 전환
         // 주의: 벽 타기는 "벽 쪽으로 입력을 유지"해야 함
-        if (!player.CheckIfTouchingWall() || (xInput != 0 && xInput != (player.FacingRight ? 1 : -1)))
+        // Strict Input: 벽 쪽으로 입력을 지속해야 함. (FacingRight일 때 x=1, 아닐 때 x=-1)
+        bool isPushingWall = (xInput == (player.FacingRight ? 1 : -1));
+
+        if (!player.CheckIfTouchingWall() || !isPushingWall)
         {
             stateMachine.ChangeState(player.AirState);
             return; 

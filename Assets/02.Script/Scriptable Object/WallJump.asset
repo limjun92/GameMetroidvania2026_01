@@ -13,4 +13,5 @@ MonoBehaviour:
   m_Name: WallJump
   m_EditorClassIdentifier: Assembly-CSharp::Artifact
   Name: WallJump
+  type: 2
   sprite: {fileID: 0}

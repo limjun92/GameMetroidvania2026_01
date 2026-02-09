@@ -13,4 +13,5 @@ MonoBehaviour:
   m_Name: DoubleJump
   m_EditorClassIdentifier: 
   Name: DoubleJump
+  type: 0
   sprite: {fileID: 0}
