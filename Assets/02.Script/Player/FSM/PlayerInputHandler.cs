@@ -11,6 +11,7 @@ public class PlayerInputHandler : MonoBehaviour
     // 외부에서 접근 가능한 입력 상태 프로퍼티들
     public Vector2 MovementInput { get; private set; }
     public bool JumpInput { get; private set; }
+    public bool JumpInputStop { get; private set; }
     public bool DashInput { get; private set; }
 
     private InputAction moveAction;
@@ -45,6 +46,7 @@ public class PlayerInputHandler : MonoBehaviour
         dashAction.Enable();
 
         jumpAction.performed += OnJump;
+        jumpAction.canceled += OnJumpStop;
         dashAction.performed += OnDash;
     }
 
@@ -55,6 +57,7 @@ public class PlayerInputHandler : MonoBehaviour
         dashAction.Disable();
 
         jumpAction.performed -= OnJump;
+        jumpAction.canceled -= OnJumpStop;
         dashAction.performed -= OnDash;
     }
 
@@ -72,6 +75,7 @@ public class PlayerInputHandler : MonoBehaviour
     }
 
     public void UseJumpInput() => JumpInput = false;
+    public void UseJumpInputStop() => JumpInputStop = false;
     public void UseDashInput() => DashInput = false;
 
     private void CheckJumpInputBuffer()
@@ -93,7 +97,13 @@ public class PlayerInputHandler : MonoBehaviour
     private void OnJump(InputAction.CallbackContext context)
     {
         JumpInput = true;
+        JumpInputStop = false;
         jumpInputStartTime = Time.time;
+    }
+
+    private void OnJumpStop(InputAction.CallbackContext context)
+    {
+        JumpInputStop = true;
     }
 
     private void OnDash(InputAction.CallbackContext context)

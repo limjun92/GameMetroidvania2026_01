@@ -31,6 +31,23 @@ public class PlayerJumpState : PlayerState
         {
              stateMachine.ChangeState(player.AirState);
         }
+        
+    }
+
+    public override void PhysicsUpdate()
+    {
+        base.PhysicsUpdate();
+
+        // 점프 키를 뗐을 때 속도 감소 (Variable Jump Height)
+        // PhysicsUpdate에서 처리하여 물리 연산 일관성 유지
+        if (player.InputHandler.JumpInputStop)
+        {
+            if (player.CurrentVelocity.y > 0)
+            {
+                player.SetVelocityY(player.CurrentVelocity.y * player.variableJumpHeightMultiplier);
+            }
+            player.InputHandler.UseJumpInputStop();
+        }
     }
 
     // 더블 점프 가능 여부 확인

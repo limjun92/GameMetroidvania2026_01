@@ -4,6 +4,10 @@ using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(PlayerInputHandler))]
+/// <summary>
+/// 플레이어의 물리 기반 이동, 점프, 대시, 벽 타기 등을 총괄하는 컨트롤러입니다.
+/// State Pattern을 사용하여 각 동작 상태(Idle, Move, Jump 등)를 관리합니다.
+/// </summary>
 public class MovementController : MonoBehaviour
 {
     #region State Machine
@@ -15,6 +19,8 @@ public class MovementController : MonoBehaviour
     public PlayerJumpState JumpState { get; private set; }
     public PlayerAirState AirState { get; private set; }
     public PlayerDashState DashState { get; private set; }
+    public PlayerWallSlideState WallSlideState { get; private set; }
+    public PlayerWallJumpState WallJumpState { get; private set; }
     #endregion
 
     #region Components
@@ -35,6 +41,7 @@ public class MovementController : MonoBehaviour
     public LayerMask groundLayer;
     public int amountOfJumps = 1;
     public bool canDoubleJump = false;
+    public float variableJumpHeightMultiplier = 0.5f;
 
     [Header("대시 설정")]
     public float dashSpeed = 20f;
@@ -43,6 +50,17 @@ public class MovementController : MonoBehaviour
     public bool isDashUnlocked = false; // 대시 해금 여부
     public bool hasDashedInAir = false; // 공중 대시 사용 여부
     public float defaultGravityScale { get; private set; }
+
+    [Header("벽 타기 / 벽 점프 설정")]
+    public Transform wallCheck;
+    public float wallCheckDistance = 0.4f;
+    public LayerMask wallLayer;
+    public float wallSlideSpeed = 3f;
+    public float wallJumpForce = 18f;
+    public Vector2 wallJumpDirection = new Vector2(1, 2);
+    public float wallJumpTime = 0.4f;
+    public float wallStickTime = 0.5f;
+    public bool isWallJumpUnlocked = false; // 벽 점프 해금 여부
     #endregion
 
     public Vector2 CurrentVelocity { get; private set; }
@@ -56,9 +74,20 @@ public class MovementController : MonoBehaviour
         MoveState = new PlayerMoveState(this, StateMachine, "Move");
         JumpState = new PlayerJumpState(this, StateMachine, "Jump");
         AirState = new PlayerAirState(this, StateMachine, "Jump"); // AirState Animation? Fall?
+        AirState = new PlayerAirState(this, StateMachine, "Jump"); // AirState Animation? Fall?
         DashState = new PlayerDashState(this, StateMachine, "Dash");
+        WallSlideState = new PlayerWallSlideState(this, StateMachine, "WallSlide");
+        WallJumpState = new PlayerWallJumpState(this, StateMachine, "Jump"); // Jump 애니메이션 재사용 또는 WallJump 사용
 
         RB = GetComponent<Rigidbody2D>();
+        
+        // 벽에 붙는 현상 해결을 위해 마찰력이 0인 재질을 생성하여 할당
+        // To prevent sticking to walls, assign a material with 0 friction
+        if (RB.sharedMaterial == null)
+        {
+            RB.sharedMaterial = new PhysicsMaterial2D("NoFriction") { friction = 0f, bounciness = 0f };
+        }
+        RB.interpolation = RigidbodyInterpolation2D.Interpolate;
         InputHandler = GetComponent<PlayerInputHandler>();
         Anim = GetComponent<Animator>();
 
@@ -86,6 +115,32 @@ public class MovementController : MonoBehaviour
             groundLayer = LayerMask.GetMask("Default", "Ground", "Terrain"); // 시도할 레이어들
             if (groundLayer.value == 0) groundLayer = -1; // Everything
             Debug.LogWarning($"MovementController: 'Ground Layer'가 설정되지 않았습니다. 임시로 {groundLayer.value} (Everything/Default)로 설정합니다.");
+        }
+
+        if (wallLayer.value == 0)
+        {
+            wallLayer = LayerMask.GetMask("WallStickable");
+            if (wallLayer.value == 0)
+            {
+                Debug.LogWarning("MovementController: 'WallStickable' 레이어를 찾을 수 없습니다. Inspector에서 Wall Layer를 설정해주세요.");
+            }
+        }
+
+        if (wallCheck == null)
+        {
+             Transform existingWallCheck = transform.Find("WallCheck");
+             if (existingWallCheck != null)
+             {
+                 wallCheck = existingWallCheck;
+             }
+             else
+             {
+                 GameObject newWallCheck = new GameObject("WallCheck");
+                 newWallCheck.transform.SetParent(transform);
+                 newWallCheck.transform.localPosition = new Vector3(0.5f, 0, 0); // 플레이어 앞쪽
+                 wallCheck = newWallCheck.transform;
+                 Debug.LogWarning("MovementController: 'WallCheck' Transform이 할당되지 않아 자동으로 생성했습니다.");
+             }
         }
     }
 
@@ -152,7 +207,14 @@ public class MovementController : MonoBehaviour
     {
         bool isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
         // Debug.Log($"CheckIfGrounded: {isGrounded} (Pos: {groundCheck.position}, Layer: {groundLayer.value})"); 
+        // Debug.Log($"CheckIfGrounded: {isGrounded} (Pos: {groundCheck.position}, Layer: {groundLayer.value})"); 
         return isGrounded;
+    }
+
+    public bool CheckIfTouchingWall()
+    {
+        if (wallCheck == null) return false;
+        return Physics2D.Raycast(wallCheck.position, transform.right, wallCheckDistance, wallLayer);
     }
 
     public void CheckIfShouldFlip(float xInput)
@@ -174,5 +236,11 @@ public class MovementController : MonoBehaviour
     {
         if (groundCheck != null)
             Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+        
+        if (wallCheck != null)
+        {
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(wallCheck.position, wallCheck.position + (Vector3)(Vector2.right * transform.localScale.x * wallCheckDistance));
+        }
     }
 }

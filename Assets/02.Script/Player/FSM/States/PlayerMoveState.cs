@@ -17,14 +17,20 @@ public class PlayerMoveState : PlayerGroundedState
 
         if (stateMachine.CurrentState != this) return;
 
-        // 입력에 따라 방향 전환 및 속도 설정
+        // 입력에 따라 방향 전환 (Visual)
         player.CheckIfShouldFlip(input.x);
-        player.SetVelocityX(player.moveSpeed * input.x);
 
         // 입력이 없으면 Idle 상태로 전환
         if (input.x == 0)
         {
             stateMachine.ChangeState(player.IdleState);
         }
+    }
+
+    public override void PhysicsUpdate()
+    {
+        base.PhysicsUpdate();
+        // 물리 이동은 FixedUpdate에서 처리
+        player.SetVelocityX(player.moveSpeed * input.x);
     }
 }

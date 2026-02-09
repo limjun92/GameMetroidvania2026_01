@@ -18,16 +18,16 @@ public class PlayerAirState : PlayerState
     {
         base.LogicUpdate();
 
-        // 공중 이동 처리
-        Vector2 input = player.InputHandler.MovementInput;
-        player.CheckIfShouldFlip(input.x);
-        player.SetVelocityX(player.moveSpeed * input.x);
-
-        if (isJumping)
+        // Wall Slide 전환
+        // 땅에 있지 않고, 벽에 붙어 있고, 벽 쪽으로 입력을 하고 있을 때 (상승 중이더라도 붙음)
+        if (!player.CheckIfGrounded() && player.CheckIfTouchingWall())
         {
-            // 상승하다가 y속도가 음수가 되면 낙하 시작
-            if (player.CurrentVelocity.y < 0)
-                isJumping = false;
+            float inputX = player.InputHandler.MovementInput.x;
+            // 벽 쪽으로 입력 확인 (오른쪽 보고 있을 때 오른쪽 키, 왼쪽 보고 있을 때 왼쪽 키)
+            if (inputX != 0 && inputX == (player.FacingRight ? 1 : -1))
+            {
+                stateMachine.ChangeState(player.WallSlideState);
+            }
         }
 
         // 땅에 닿으면 Idle 상태로 전환
@@ -46,6 +46,35 @@ public class PlayerAirState : PlayerState
         {
             player.InputHandler.UseDashInput();
             stateMachine.ChangeState(player.DashState);
+        }
+    }
+
+    public override void PhysicsUpdate()
+    {
+        base.PhysicsUpdate();
+
+        // 공중 이동 물리 처리
+        Vector2 input = player.InputHandler.MovementInput;
+        player.SetVelocityX(player.moveSpeed * input.x);
+
+        if (isJumping)
+        {
+             // 상승하다가 y속도가 음수가 되면 낙하 시작
+            if (player.CurrentVelocity.y < 0)
+            {
+                isJumping = false;
+            }
+            // 점프 중 점프 키를 뗐을 때 속도 감소 (Variable Jump Height)
+            // PhysicsUpdate에서 처리
+            else if (player.InputHandler.JumpInputStop)
+            {
+                if (player.CurrentVelocity.y > 0)
+                {
+                    player.SetVelocityY(player.CurrentVelocity.y * player.variableJumpHeightMultiplier);
+                    isJumping = false; 
+                }
+                player.InputHandler.UseJumpInputStop();
+            }
         }
     }
 
